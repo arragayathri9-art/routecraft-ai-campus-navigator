@@ -1,0 +1,133 @@
+{
+  "campus_name": "Aurora University",
+  "is_demo_data": true,
+  "notice": "DEMO DATA: This is synthetic demonstration data for the Aurora University Campus Navigator. Actual building layouts, coordinates, accessibility features (stairs, ramps, tactile paving), and distances are for prototyping purposes until verified by official campus surveying.",
+  "distance_unit": "meters",
+  "map_bounds": {
+    "width": 900,
+    "height": 850
+  },
+  "locations": [
+    {
+      "id": "north_gate",
+      "name": "North Campus Gate",
+      "category": "Gates & Transit",
+      "description": "Primary northern pedestrian and shuttle entrance facing University Avenue. Features campus directory kiosk and bike share station.",
+      "floor": "Ground",
+      "coordinates": { "x": 450, "y": 60, "lat": 41.7568, "lng": -88.3390 },
+      "tags": ["entrance", "shuttle", "bike share", "security", "gate"]
+    },
+    {
+      "id": "lib",
+      "name": "Phillips Central Library",
+      "category": "Academic & Research",
+      "description": "Four-story academic library equipped with quiet research zones, collaborative study pods, digital archives, and 24/7 IT helpdesk on Floor 1.",
+      "floor": "Floors 1-4",
+      "coordinates": { "x": 450, "y": 230, "lat": 41.7554, "lng": -88.3390 },
+      "tags": ["library", "study", "books", "quiet", "wifi", "printing", "computers"]
+    },
+    {
+      "id": "sci",
+      "name": "Science & Discovery Complex",
+      "category": "Academic & Research",
+      "description": "Home to Chemistry, Biology, and Physics departments. Features advanced wet labs, planetarium auditorium, and faculty offices.",
+      "floor": "Floors 1-3",
+      "coordinates": { "x": 220, "y": 200, "lat": 41.7556, "lng": -88.3418 },
+      "tags": ["science", "chemistry", "biology", "physics", "labs", "classes"]
+    },
+    {
+      "id": "eng",
+      "name": "Turing Engineering & Robotics Hall",
+      "category": "Academic & Research",
+      "description": "Modern engineering facility with robotics arenas, 3D printing maker labs, computer science classrooms, and high-performance server facilities.",
+      "floor": "Floors 1-3",
+      "coordinates": { "x": 200, "y": 390, "lat": 41.7540, "lng": -88.3421 },
+      "tags": ["engineering", "robotics", "makerspace", "coding", "computer science"]
+    },
+    {
+      "id": "quad",
+      "name": "Spartan Central Quad",
+      "category": "Plazas & Recreation",
+      "description": "The green social heart of the campus. Features open lawns, shade pavilions, fountain plaza, and outdoor study seating.",
+      "floor": "Ground",
+      "coordinates": { "x": 450, "y": 400, "lat": 41.7539, "lng": -88.3390 },
+      "tags": ["quad", "park", "lawn", "fountain", "outdoor", "events"]
+    },
+    {
+      "id": "stu_union",
+      "name": "Spartan Student Union",
+      "category": "Student Life & Services",
+      "description": "Center of student activities including Campus Bookstore, Career Services, Student Government, gaming lounge, and commuter lockers.",
+      "floor": "Floors 1-2",
+      "coordinates": { "x": 700, "y": 240, "lat": 41.7553, "lng": -88.3362 },
+      "tags": ["student life", "bookstore", "clubs", "career center", "lockers", "help"]
+    },
+    {
+      "id": "adm",
+      "name": "Eckhart Administration Hall",
+      "category": "Administration",
+      "description": "Houses Admissions, Registrar, Financial Aid, Office of the Dean, and International Student Services.",
+      "floor": "Floors 1-2",
+      "coordinates": { "x": 720, "y": 420, "lat": 41.7538, "lng": -88.3360 },
+      "tags": ["admissions", "registrar", "financial aid", "dean", "office", "admin"]
+    },
+    {
+      "id": "arts",
+      "name": "Arts & Digital Media Pavilion",
+      "category": "Academic & Research",
+      "description": "Art studios, digital music labs, black-box theater, and public art gallery exhibiting student and visiting artist work.",
+      "floor": "Floors 1-2",
+      "coordinates": { "x": 230, "y": 570, "lat": 41.7525, "lng": -88.3417 },
+      "tags": ["art", "theater", "music", "gallery", "media", "auditorium"]
+    },
+    {
+      "id": "cafe",
+      "name": "Aurora Dining Hall & Cafe",
+      "category": "Dining & Food",
+      "description": "All-day dining facility with diverse food stations (vegan, grill, international, salad bar) and an express espresso bar.",
+      "floor": "Ground",
+      "coordinates": { "x": 680, "y": 580, "lat": 41.7524, "lng": -88.3364 },
+      "tags": ["food", "dining", "cafe", "coffee", "lunch", "breakfast", "dinner"]
+    },
+    {
+      "id": "gym",
+      "name": "Spartan Athletic & Wellness Center",
+      "category": "Plazas & Recreation",
+      "description": "Comprehensive recreation center featuring basketball courts, fitness gym, indoor running track, Olympic pool, and wellness clinic.",
+      "floor": "Floors 1-2",
+      "coordinates": { "x": 450, "y": 620, "lat": 41.7521, "lng": -88.3390 },
+      "tags": ["gym", "fitness", "sports", "pool", "basketball", "wellness", "health"]
+    },
+    {
+      "id": "south_gate",
+      "name": "South Campus Plaza & Transit Station",
+      "category": "Gates & Transit",
+      "description": "Southern gateway connecting to commuter parking structure, city bus loop, and visitor information desk.",
+      "floor": "Ground",
+      "coordinates": { "x": 450, "y": 780, "lat": 41.7508, "lng": -88.3390 },
+      "tags": ["entrance", "bus", "parking", "transit", "visitor info", "gate"]
+    }
+  ],
+  "edges": [
+    { "from": "north_gate", "to": "lib", "distance": 170, "path_type": "Broad tree-lined walkway", "accessible": true, "has_stairs": false, "ramp_available": true, "accessibility_verified": true },
+    { "from": "north_gate", "to": "sci", "distance": 270, "path_type": "Paved northwestern walkway", "accessible": true, "has_stairs": false, "ramp_available": true, "accessibility_verified": true },
+    { "from": "north_gate", "to": "stu_union", "distance": 310, "path_type": "Paved northeastern pathway", "accessible": true, "has_stairs": false, "ramp_available": true, "accessibility_verified": true },
+    { "from": "sci", "to": "lib", "distance": 230, "path_type": "West-central pedestrian path", "accessible": true, "has_stairs": false, "ramp_available": true, "accessibility_verified": true },
+    { "from": "sci", "to": "eng", "distance": 190, "path_type": "Science Quad stepped terrace corridor", "accessible": false, "has_stairs": true, "ramp_available": false, "accessibility_verified": true },
+    { "from": "lib", "to": "stu_union", "distance": 250, "path_type": "East-central boulevard", "accessible": true, "has_stairs": false, "ramp_available": true, "accessibility_verified": true },
+    { "from": "lib", "to": "quad", "distance": 170, "path_type": "Central promenade", "accessible": true, "has_stairs": false, "ramp_available": true, "accessibility_verified": true },
+    { "from": "eng", "to": "quad", "distance": 250, "path_type": "Engineering plaza ramped path", "accessible": true, "has_stairs": false, "ramp_available": true, "accessibility_verified": true },
+    { "from": "eng", "to": "arts", "distance": 180, "path_type": "West campus gallery walk", "accessible": true, "has_stairs": false, "ramp_available": true, "accessibility_verified": true },
+    { "from": "stu_union", "to": "adm", "distance": 180, "path_type": "Administrative courtyard terrace", "accessible": true, "has_stairs": true, "ramp_available": true, "accessibility_verified": true },
+    { "from": "adm", "to": "quad", "distance": 270, "path_type": "East lawn walkway", "accessible": true, "has_stairs": false, "ramp_available": true, "accessibility_verified": true },
+    { "from": "adm", "to": "cafe", "distance": 160, "path_type": "Dining patio sunken stairs", "accessible": false, "has_stairs": true, "ramp_available": false, "accessibility_verified": true },
+    { "from": "quad", "to": "arts", "distance": 280, "path_type": "Southwest garden trail", "accessible": false, "has_stairs": false, "ramp_available": false, "accessibility_verified": false },
+    { "from": "quad", "to": "gym", "distance": 220, "path_type": "South promenade", "accessible": true, "has_stairs": false, "ramp_available": true, "accessibility_verified": true },
+    { "from": "quad", "to": "cafe", "distance": 290, "path_type": "Southeast fountain lane", "accessible": true, "has_stairs": false, "ramp_available": true, "accessibility_verified": true },
+    { "from": "arts", "to": "gym", "distance": 230, "path_type": "Athletic & Arts stepped connecting walk", "accessible": false, "has_stairs": true, "ramp_available": false, "accessibility_verified": true },
+    { "from": "cafe", "to": "gym", "distance": 230, "path_type": "Recreation connector", "accessible": true, "has_stairs": false, "ramp_available": true, "accessibility_verified": true },
+    { "from": "cafe", "to": "south_gate", "distance": 300, "path_type": "South dining boulevard", "accessible": true, "has_stairs": false, "ramp_available": true, "accessibility_verified": true },
+    { "from": "gym", "to": "south_gate", "distance": 160, "path_type": "South gateway avenue", "accessible": true, "has_stairs": false, "ramp_available": true, "accessibility_verified": true },
+    { "from": "arts", "to": "south_gate", "distance": 310, "path_type": "Southwest parking path", "accessible": false, "has_stairs": false, "ramp_available": false, "accessibility_verified": false }
+  ]
+}
