@@ -27,7 +27,7 @@ export default function CampusNavigatorPage() {
   // UI Interactive States
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [healthLoading, setHealthLoading] = useState(false);
+  const [healthLoading, setHealthLoading] = useState(true);
   const [isAiOpen, setIsAiOpen] = useState(true);
 
   // Search & Filtering
@@ -43,21 +43,25 @@ export default function CampusNavigatorPage() {
   const [routeLoading, setRouteLoading] = useState(false);
   const [routeError, setRouteError] = useState<string | null>(null);
 
-  // Load initial health status
-  const loadHealth = useCallback(async () => {
+  // Load initial health status with auto-retry for server wakeups
+  const loadHealth = useCallback(async (retry = 0) => {
     setHealthLoading(true);
     try {
       const h = await api.getHealth();
       setHealth(h);
-    } catch {
-      setHealth(null);
-    } finally {
       setHealthLoading(false);
+    } catch {
+      if (retry < 3) {
+        setTimeout(() => loadHealth(retry + 1), 2500);
+      } else {
+        setHealth(null);
+        setHealthLoading(false);
+      }
     }
   }, []);
 
-  // Load full campus topology
-  const loadCampusData = useCallback(async () => {
+  // Load full campus topology with auto-retry for server wakeups
+  const loadCampusData = useCallback(async (retry = 0) => {
     setLoading(true);
     setError(null);
     try {
@@ -76,14 +80,18 @@ export default function CampusNavigatorPage() {
         setStartId(graphData.locations[0].id); // North Gate
         setDestId(graphData.locations[1].id); // Library
       }
-    } catch (err: unknown) {
-      const msg =
-        err instanceof Error
-          ? err.message
-          : 'Could not connect to RouteCraft API server.';
-      setError(msg);
-    } finally {
       setLoading(false);
+    } catch (err: unknown) {
+      if (retry < 3) {
+        setTimeout(() => loadCampusData(retry + 1), 2500);
+      } else {
+        const msg =
+          err instanceof Error
+            ? err.message
+            : 'Could not connect to RouteCraft API server.';
+        setError(msg);
+        setLoading(false);
+      }
     }
   }, []);
 

@@ -66,12 +66,16 @@ export const Header: React.FC<HeaderProps> = ({
             <div className="flex items-center gap-1.5">
               <span
                 className={`w-2 h-2 rounded-full ${
-                  health?.status === 'healthy' ? 'bg-emerald-500' : 'bg-rose-500'
+                  healthLoading
+                    ? 'bg-amber-400 animate-pulse'
+                    : health?.status === 'healthy'
+                    ? 'bg-emerald-500'
+                    : 'bg-rose-500'
                 }`}
               />
               <span className="text-slate-600 font-medium">
                 {healthLoading
-                  ? 'Checking...'
+                  ? 'Connecting...'
                   : health?.status === 'healthy'
                   ? 'API Online'
                   : 'API Disconnected'}
