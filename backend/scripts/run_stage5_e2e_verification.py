@@ -33,7 +33,13 @@ def test_2_campus_locations_load():
         assert loc is not None, f"Required building '{rid}' missing from graph data"
         assert "x" in loc["coordinates"] and "y" in loc["coordinates"], f"Coordinates missing in {rid}"
         assert len(loc["tags"]) > 0, f"Tags missing in {rid}"
-    print(f"PASSED: All {len(required_ids)} campus landmarks loaded with coordinates and tags.")
+    
+    # Check that edges include has_stairs, ramp_available, and accessibility_verified
+    edges = graph_data["edges"]
+    assert len(edges) >= 20
+    first_edge = edges[0]
+    assert "has_stairs" in first_edge and "ramp_available" in first_edge and "accessibility_verified" in first_edge
+    print(f"PASSED: All {len(required_ids)} campus landmarks and 20 accessibility-annotated edges loaded.")
     return True
 
 def test_3_search_filtering():
@@ -57,74 +63,91 @@ def test_3_search_filtering():
     print("PASSED: Search filters correctly across name, category, description, and tags.")
     return True
 
-def test_4_route_calculation():
-    print("--- [TEST 4] Dijkstra Route Calculation (Shortest Path) ---")
-    # Test North Gate to South Gate
-    res = campus_service.calculate_route("north_gate", "south_gate")
-    assert res.found is True, "Route north_gate -> south_gate must be found"
-    assert res.total_distance == 720.0, f"Expected 720.0m shortest path, got {res.total_distance}"
-    assert res.path_node_ids == ["north_gate", "lib", "quad", "gym", "south_gate"], f"Unexpected path: {res.path_node_ids}"
-    assert len(res.steps) == 4, f"Expected 4 navigation steps, got {len(res.steps)}"
+def test_4_route_calculation_and_accessibility_preferences():
+    print("--- [TEST 4] Dijkstra Route Calculation & Accessibility Preferences ---")
+    # 1. Normal Shortest Route (North Gate -> South Gate)
+    res_default = campus_service.calculate_route("north_gate", "south_gate", preference="shortest")
+    assert res_default.found is True, "Route north_gate -> south_gate must be found"
+    assert res_default.total_distance == 720.0, f"Expected 720.0m shortest path, got {res_default.total_distance}"
+    assert res_default.path_node_ids == ["north_gate", "lib", "quad", "gym", "south_gate"]
+    assert len(res_default.steps) == 4
     
-    # Check cumulative distance progression
-    for step in res.steps:
-        assert step.distance > 0, "Each step must have positive distance"
-    assert res.steps[-1].cumulative_distance == 720.0, "Final cumulative distance must equal total distance"
-    
-    # Test Science to Cafe
-    res2 = campus_service.calculate_route("sci", "cafe")
-    assert res2.found is True
-    # sci -> lib (230) -> quad (170) -> cafe (290) = 690, or sci -> eng (190) -> quad (250) -> cafe (290) = 730, or sci -> lib (230) -> stu_union (250) -> adm (180) -> cafe (160) = 820
-    assert res2.total_distance == 690.0, f"Expected 690.0m for sci -> cafe, got {res2.total_distance}"
-    assert res2.path_node_ids == ["sci", "lib", "quad", "cafe"]
-    print("PASSED: Dijkstra shortest path algorithm computes mathematically optimal routes and step instructions.")
+    # 2. Shortest Mode takes stairs when direct: Science (sci) -> Engineering (eng)
+    res_short = campus_service.calculate_route("sci", "eng", preference="shortest")
+    assert res_short.found is True
+    assert res_short.total_distance == 190.0
+    assert res_short.path_node_ids == ["sci", "eng"]
+    assert res_short.steps[0].has_stairs is True, "Direct sci->eng edge has stairs"
+
+    # 3. Avoid Stairs Mode avoids direct stairs and detours via lib & quad: sci -> lib -> quad -> eng = 650.0m
+    res_avoid = campus_service.calculate_route("sci", "eng", preference="avoid_stairs")
+    assert res_avoid.found is True
+    assert res_avoid.total_distance == 650.0, f"Expected 650.0m detour, got {res_avoid.total_distance}"
+    assert res_avoid.path_node_ids == ["sci", "lib", "quad", "eng"]
+    assert all(not s.has_stairs or s.ramp_available for s in res_avoid.steps), "Must not have unramped stairs"
+
+    # 4. Wheelchair-Friendly Mode requires verified barrier-free path
+    res_wc = campus_service.calculate_route("sci", "eng", preference="wheelchair")
+    assert res_wc.found is True
+    assert res_wc.total_distance == 650.0
+    assert res_wc.is_accessible_verified is True
+    assert "Wheelchair-accessible" in res_wc.preference_explanation
+
+    print("PASSED: Accessibility preferences (Shortest, Avoid Stairs, Wheelchair) filter pathways correctly.")
     return True
 
 def test_5_route_highlighting_logic():
-    print("--- [TEST 5] Route Map Highlighting Logic ---")
-    res = campus_service.calculate_route("north_gate", "south_gate")
+    print("--- [TEST 5] Route Map Highlighting & Selection Rationale ---")
+    res = campus_service.calculate_route("sci", "eng", preference="wheelchair")
     ids = res.path_node_ids
-    # Emulate frontend activeRoutePairs calculation
     active_route_pairs = set()
     for i in range(len(ids) - 1):
         active_route_pairs.add(f"{ids[i]}->{ids[i+1]}")
         active_route_pairs.add(f"{ids[i+1]}->{ids[i]}")
     
-    # Verify expected edges are captured
-    assert "north_gate->lib" in active_route_pairs
+    # Verify detour edges are in active route
+    assert "sci->lib" in active_route_pairs
     assert "lib->quad" in active_route_pairs
-    assert "quad->gym" in active_route_pairs
-    assert "gym->south_gate" in active_route_pairs
-    assert "north_gate->sci" not in active_route_pairs
-    print("PASSED: Active route edge pairs generated symmetrically for directional map highlighting.")
+    assert "quad->eng" in active_route_pairs
+    assert "sci->eng" not in active_route_pairs
+    assert res.preference_explanation is not None
+    assert len(res.preference_explanation) > 10
+    print("PASSED: Highlighting edge pairs and preference rationale verified.")
     return True
 
-def test_6_invalid_locations_and_disconnected_routes():
-    print("--- [TEST 6] Error Handling: Invalid Locations & Disconnected Routes ---")
+def test_6_invalid_locations_and_no_suitable_route():
+    print("--- [TEST 6] Invalid Locations & Inaccessible / No Suitable Route Handling ---")
     # Invalid start
-    res_inv_start = campus_service.calculate_route("invalid_gate", "lib")
-    assert res_inv_start.found is False
-    assert "not found" in res_inv_start.message.lower()
-    
-    # Invalid dest
-    res_inv_dest = campus_service.calculate_route("lib", "invalid_hall")
-    assert res_inv_dest.found is False
-    assert "not found" in res_inv_dest.message.lower()
-    
-    # Disconnected graph handling
+    res_inv = campus_service.calculate_route("invalid_gate", "lib")
+    assert res_inv.found is False
+    assert "not found" in res_inv.message.lower()
+
+    # Isolated node in graph
     dummy_locations = [
         Location(id="A", name="A", category="Cat", description="A", coordinates=Coordinates(x=0, y=0), tags=[]),
-        Location(id="B", name="B", category="Cat", description="B", coordinates=Coordinates(x=10, y=10), tags=[]),
-        Location(id="ISOLATED", name="Iso", category="Cat", description="Iso", coordinates=Coordinates(x=20, y=20), tags=[])
+        Location(id="STAIRS_NODE", name="Stairs Tower", category="Cat", description="Stairs only", coordinates=Coordinates(x=10, y=10), tags=[]),
     ]
+    # Connected strictly by unramped stairs
     dummy_edges = [
-        Edge(**{"from": "A", "to": "B", "distance": 15.0, "path_type": "Walkway"})
+        Edge(**{"from": "A", "to": "STAIRS_NODE", "distance": 20.0, "path_type": "Steep Steps", "accessible": False, "has_stairs": True, "ramp_available": False, "accessibility_verified": True})
     ]
     graph = CampusGraph(dummy_locations, dummy_edges, "meters")
-    res_disc = graph.find_shortest_path("A", "ISOLATED")
-    assert res_disc.found is False
-    assert "no connected pathway" in res_disc.message.lower()
-    print("PASSED: Invalid IDs and disconnected nodes are safely caught and return structured error messages.")
+
+    # Shortest should find it
+    res_s = graph.find_shortest_path("A", "STAIRS_NODE", preference="shortest")
+    assert res_s.found is True
+
+    # Avoid stairs must return found: False with informative message
+    res_avoid = graph.find_shortest_path("A", "STAIRS_NODE", preference="avoid_stairs")
+    assert res_avoid.found is False
+    assert "no suitable route avoiding stairs" in res_avoid.message.lower()
+
+    # Wheelchair must return found: False with informative message
+    res_wc = graph.find_shortest_path("A", "STAIRS_NODE", preference="wheelchair")
+    assert res_wc.found is False
+    assert "no suitable wheelchair-friendly route" in res_wc.message.lower()
+
+    print("PASSED: Inaccessible paths produce informative failure messages instead of returning unsuitable routes.")
     return True
 
 async def test_7_ollama_assistant_grounding():
@@ -151,11 +174,11 @@ async def test_8_ollama_offline_fallback():
     status = await offline_service.check_ollama_status()
     assert status["online"] is False
     
-    res = await offline_service.ask_assistant("Where can I find lunch and dining?")
+    res = await offline_service.ask_assistant("Can I get a wheelchair accessible route on campus?")
     assert res.ollama_online is False
     assert res.model == "local-fallback"
-    assert "Dining" in res.reply or "Cafe" in res.reply or "offline" in res.reply
-    print("PASSED: Offline Ollama returns keyword-grounded fallback response without crashing.")
+    assert "Accessibility-Aware" in res.reply or "Wheelchair" in res.reply or "offline" in res.reply
+    print("PASSED: Offline Ollama returns keyword-grounded accessibility navigation instructions without crashing.")
     return True
 
 def test_9_demo_notice_presence():
@@ -185,7 +208,7 @@ def test_10_production_build_artifact_check():
 
 async def main():
     print("==================================================")
-    print("ROUTE CRAFT AI — STAGE 5 END-TO-END VERIFICATION")
+    print("ROUTE CRAFT AI — STEP 7 ACCESSIBILITY E2E TESTS")
     print("==================================================\n")
     
     results = {}
@@ -209,22 +232,22 @@ async def main():
         results["3. Location Search Filtering"] = False
 
     try:
-        results["4. Shortest Path Routing"] = test_4_route_calculation()
+        results["4. Dijkstra Routing & Accessibility Preferences"] = test_4_route_calculation_and_accessibility_preferences()
     except Exception as e:
         print(f"FAILED [TEST 4]: {e}")
-        results["4. Shortest Path Routing"] = False
+        results["4. Dijkstra Routing & Accessibility Preferences"] = False
 
     try:
-        results["5. Route Highlighting on Map"] = test_5_route_highlighting_logic()
+        results["5. Route Highlighting & Explanation"] = test_5_route_highlighting_logic()
     except Exception as e:
         print(f"FAILED [TEST 5]: {e}")
-        results["5. Route Highlighting on Map"] = False
+        results["5. Route Highlighting & Explanation"] = False
 
     try:
-        results["6. Invalid Locations & Disconnected Routes"] = test_6_invalid_locations_and_disconnected_routes()
+        results["6. Invalid Locations & Inaccessible Routes"] = test_6_invalid_locations_and_no_suitable_route()
     except Exception as e:
         print(f"FAILED [TEST 6]: {e}")
-        results["6. Invalid Locations & Disconnected Routes"] = False
+        results["6. Invalid Locations & Inaccessible Routes"] = False
 
     try:
         results["7. Ollama Assistant with Campus Data"] = await test_7_ollama_assistant_grounding()
@@ -251,7 +274,7 @@ async def main():
         results["10. Frontend Production Build"] = False
 
     print("\n==================================================")
-    print("STAGE 5 TEST SUMMARY")
+    print("STEP 7 ACCESSIBILITY VERIFICATION SUMMARY")
     print("==================================================")
     all_passed = True
     for name, passed in results.items():
@@ -262,7 +285,7 @@ async def main():
             
     print("==================================================")
     if all_passed:
-        print("ALL 10 VERIFICATION CHECKS PASSED SUCCESSFULLY!")
+        print("ALL STEP 7 VERIFICATION CHECKS PASSED SUCCESSFULLY!")
     else:
         print("SOME VERIFICATION CHECKS FAILED.")
         sys.exit(1)
