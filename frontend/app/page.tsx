@@ -80,7 +80,7 @@ export default function CampusNavigatorPage() {
       const msg =
         err instanceof Error
           ? err.message
-          : 'Could not connect to RouteCraft API server at http://127.0.0.1:8000';
+          : 'Could not connect to RouteCraft API server.';
       setError(msg);
     } finally {
       setLoading(false);
